@@ -18,12 +18,10 @@ alias nah='git reset --hard;git clean -df'
 alias pp="php artisan test --parallel"
 alias d="php artisan dusk"
 alias sshconfig="vi ~/.ssh/config"
-alias copykey='command cat ~/.ssh/id_rsa.public | pbcopy'
+alias copykey='command cat ~/.ssh/id_ed25519.pub | pbcopy'
 alias sail='./vendor/bin/sail'
 alias tunnel='valet share -subdomain=freekmurze -region=eu'
 
-# JavaScript
-alias jest="./node_modules/.bin/jest"
 
 # Git
 alias gc="git checkout"
@@ -39,14 +37,7 @@ alias o="open ."
 alias l="ls -laF"
 
 # PhpStorm
-alias phpstorm='open -a /Applications/PhpStorm.app "`pwd`"'
-
-# PHP
-alias switch-php80="brew unlink php@7.4 && brew link --overwrite --force php"
-alias switch-php74="brew unlink php && brew link --overwrite --force php@7.4"
-
-# Redis
-alias flush-redis="redis-cli FLUSHALL"
+alias phpstorm='open -a $HOME/Applications/PhpStorm.app "`pwd`"'
 
 # Show/hide hidden files in Finder
 alias show="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
@@ -72,12 +63,7 @@ alias sudo='sudo '
 # Scape webpage
 alias scrape="scrapeUrl"
 
-# Switch NPM
-alias npmnpm="npm config set registry https://registry.npmjs.org"
-alias npmspatie="npm config set registry https://npm.spatie.be"
-
-# Restart touch bar
-alias touchbar="killall ControlStrip"
-
 alias php-log="open ~/.config/valet/Log/php-fpm.log"
 alias nginx-log="open ~/.config/valet/Log/nginx-error.log"
+
+alias vlr="vault login -method=oidc -format=json > /dev/null 2>&1 && vault read database/creds/developer -format=json | jq .data.username,.data.password"

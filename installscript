@@ -23,9 +23,6 @@ ln -s $HOME/.dotfiles/shell/.vimrc $HOME/.vimrc
 rm $HOME/.vim
 ln -s $HOME/.dotfiles/shell/.vim $HOME/.vim
 
-# Symlink the Mackup config
-ln -s $HOME/.dotfiles/macos/.mackup.cfg $HOME/.mackup.cfg
-
 # Fix missing font characters (see https://github.com/robbyrussell/oh-my-zsh/issues/1906)
 cd ~/.oh-my-zsh/themes/
 git checkout d6a36b1 agnoster.zsh-theme
@@ -34,12 +31,6 @@ git checkout d6a36b1 agnoster.zsh-theme
 cd ~/.dotfiles/shell
 chmod +x z.sh
 
-echo 'Configure npm'
-echo '-------------'
-# Create a directory for global packages and tell npm where to store globally installed packages
-mkdir "${HOME}/.npm-packages"
-npm config set prefix "${HOME}/.npm-packages"
-
 echo 'Install homebrew'
 echo '----------------'
 echo install homebrew
@@ -47,10 +38,6 @@ sudo rm -rf /usr/local/Cellar /usr/local/.git && brew cleanup
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> $HOME/.zprofile
 eval "$(/opt/homebrew/bin/brew shellenv)"
-
-echo 'Install node'
-echo '------------'
-brew install node
 
 echo 'Install pkg-config'
 echo '------------------'
@@ -88,27 +75,46 @@ echo 'Install some nice quicklook plugins'
 echo '-----------------------------------'
 brew install --cask qlcolorcode qlstephen qlmarkdown quicklook-json qlprettypatch quicklook-csv betterzip  suspicious-package
 
+echo 'Install zsh-autosuggestions'
+echo '---------------------------'
+brew install zsh-autosuggestions
+
+echo 'Install warp'
+echo '---------------------------'
+brew install --cask warp
+
+echo 'Install Fig'
+echo '---------------------------'
+brew install fig
+
+echo 'Install MySQL client'
+echo '---------------------------'
+brew install mysql-client
+
+echo 'Install AWS CLI'
+echo '---------------------------'
+brew install aws-cli
+
+echo 'Install Vault'
+echo '---------------------------'
+brew install vault
+
+echo 'Install JQ'
+echo '---------------------------'
+brew install jq
+
+echo 'Install Darktable'
+echo '---------------------------'
+brew install --cask darktable
+
 echo 'Install php'
 echo '-----------'
-brew tap shivammathur/php
-brew install shivammathur/php/php@8.1
-brew link --overwrite --force php@8.1
+brew install php@8.1
+brew install php
 
 echo 'Install composer'
 echo '----------------'
-EXPECTED_COMPOSER_CHECKSUM="$(curl https://composer.github.io/installer.sig)"
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-ACTUAL_COMPOSER_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
-if [ "$EXPECTED_COMPOSER_CHECKSUM" != "$ACTUAL_COMPOSER_CHECKSUM" ]
-then
-    >&2 echo 'ERROR: Invalid installer checksum'
-    rm composer-setup.php
-    exit 1
-fi
-php composer-setup.php
-rm composer-setup.php
-sudo mkdir /usr/local/bin/
-sudo mv composer.phar /usr/local/bin/composer
+brew install composer
 
 echo 'Install aicommits'
 echo '-----------------'
@@ -134,10 +140,6 @@ echo 'Install redis'
 echo '-------------'
 pecl install redis
 
-echo 'Install laravel envoy'
-echo '---------------------'
-composer global require "laravel/envoy=~2.0"
-
 echo 'Install phpunit-watcher'
 echo '-----------------------'
 composer global require spatie/phpunit-watcher
@@ -146,27 +148,6 @@ echo 'Install laravel valet'
 echo '---------------------'
 composer global require laravel/valet
 valet install
-
-echo 'Install mysql'
-echo '-------------'
-brew install mysql
-brew services start mysql
-
-echo 'Install yarn'
-echo '------------'
-brew install yarn
-
-echo 'Install ghostscript'
-echo '-------------------'
-brew install ghostscript
-
-echo 'Install mackup'
-echo '--------------'
-brew install mackup
-
-echo 'Install zsh-autosuggestions'
-echo '---------------------------'
-brew install zsh-autosuggestions
 
 echo '++++++++++++++++++++++++++++++'
 echo '++++++++++++++++++++++++++++++'
