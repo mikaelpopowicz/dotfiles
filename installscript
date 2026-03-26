@@ -73,7 +73,7 @@ brew install git-secret
 
 echo 'Install some nice quicklook plugins'
 echo '-----------------------------------'
-brew install --cask qlcolorcode qlstephen qlmarkdown quicklook-json qlprettypatch quicklook-csv betterzip  suspicious-package
+brew install --cask qlcolorcode qlstephen qlmarkdown quicklook-json qlprettypatch quicklook-csv suspicious-package
 
 echo 'Install zsh-autosuggestions'
 echo '---------------------------'
@@ -83,9 +83,61 @@ echo 'Install warp'
 echo '---------------------------'
 brew install --cask warp
 
-echo 'Install Fig'
+echo 'Install ray'
 echo '---------------------------'
-brew install fig
+brew install --cask ray
+
+echo 'Install helo'
+echo '---------------------------'
+brew install --cask helo
+
+echo 'Install setapp'
+echo '---------------------------'
+brew install --cask setapp
+
+echo 'Install nordvpn'
+echo '---------------------------'
+brew install --cask nordvpn
+
+echo 'Install docker'
+echo '---------------------------'
+brew install --cask docker
+
+echo 'Install tuple'
+echo '---------------------------'
+brew install --cask tuple
+
+echo 'Install raycast'
+echo '---------------------------'
+brew install --cask raycast
+
+echo 'Install slack'
+echo '---------------------------'
+brew install --cask slack
+
+echo 'Install visual-studio-code'
+echo '---------------------------'
+brew install --cask visual-studio-code
+
+echo 'Install jetbrains-toolbox'
+echo '---------------------------'
+brew install --cask jetbrains-toolbox
+
+echo 'Install 1password'
+echo '---------------------------'
+brew install --cask 1password
+
+echo 'Install dbngin'
+echo '---------------------------'
+brew install --cask dbngin
+
+echo 'Install insomnia'
+echo '---------------------------'
+brew install --cask insomnia
+
+echo 'Install google-chrome'
+echo '---------------------------'
+brew install --cask google-chrome
 
 echo 'Install MySQL client'
 echo '---------------------------'
@@ -93,23 +145,14 @@ brew install mysql-client
 
 echo 'Install AWS CLI'
 echo '---------------------------'
-brew install aws-cli
-
-echo 'Install Vault'
-echo '---------------------------'
-brew install vault
+brew install awscli
 
 echo 'Install JQ'
 echo '---------------------------'
 brew install jq
 
-echo 'Install Darktable'
-echo '---------------------------'
-brew install --cask darktable
-
 echo 'Install php'
 echo '-----------'
-brew install php@8.1
 brew install php
 
 echo 'Install composer'
@@ -119,18 +162,6 @@ brew install composer
 echo 'Install aicommits'
 echo '-----------------'
 npm install -g aicommits
-
-echo 'Install imagemagick'
-echo '-------------------'
-brew install imagemagick
-
-echo 'Install imagick'
-echo '---------------'
-pecl install imagick
-
-echo 'Install memcached'
-echo '-----------------'
-pecl install memcached
 
 echo 'Install xdebug'
 echo '--------------'
@@ -148,6 +179,20 @@ echo 'Install laravel valet'
 echo '---------------------'
 composer global require laravel/valet
 valet install
+valet loopback 10.254.254.254
+
+if [ -f ./proxies.sh]
+    chmod +x proxies.sh
+    /bin/bash ./proxies.sh
+fi
+
+echo 'Install nvm'
+echo '-----------------------'
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+echo 'Install node 20'
+echo '-----------------------'
+nvm install 20
 
 echo '++++++++++++++++++++++++++++++'
 echo '++++++++++++++++++++++++++++++'
