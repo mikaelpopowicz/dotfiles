@@ -154,3 +154,61 @@ nah () {
         git rebase --abort
     fi
 }
+
+function dce() {
+   local service="$1"
+   if [ -z "$service" ]; then
+      service=$(docker compose config --services | gum filter --placeholder "Select service...")
+   fi
+   [ -z "$service" ] && return 1
+   if [ $# -le 1 ]; then
+      docker compose exec "$service" bash
+   else
+      docker compose exec "$service" "${@:2}"
+   fi
+}
+
+function dcl() {
+   local service="$1"
+   if [ -z "$service" ]; then
+      service=$(docker compose config --services | gum filter --placeholder "Select service...")
+   fi
+   [ -z "$service" ] && return 1
+   docker compose logs --follow "$service" "${@:2}"
+}
+
+function dcu() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services (empty = all)..." | tr '\n' ' ')
+      docker compose up -d ${=services}
+   else
+      docker compose up -d "$@"
+   fi
+}
+
+function dcd() {
+   docker compose down
+}
+
+function dcs() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services to stop..." | tr '\n' ' ')
+      [ -z "$services" ] && return 1
+      docker compose stop ${=services}
+   else
+      docker compose stop "$@"
+   fi
+}
+
+function dcr() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services to restart..." | tr '\n' ' ')
+      [ -z "$services" ] && return 1
+      docker compose restart ${=services}
+   else
+      docker compose restart "$@"
+   fi
+}
