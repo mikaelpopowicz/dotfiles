@@ -38,6 +38,7 @@ brew "direnv"
 brew "jq"
 brew "yq"
 brew "bottom"
+brew "gum"
 
 # Development tools
 cask "claude-code"

@@ -13,7 +13,6 @@ alias hostfile="sudo vi /etc/hosts"
 alias deploy='scotty run deploy'
 alias deploy-code='scotty run deploy-code'
 alias mfs='php artisan migrate:fresh --seed'
-alias nah='git reset --hard;git clean -df'
 
 alias pp="./vendor/bin/pest --parallel"
 alias pt="./vendor/bin/pest --parallel --tia"

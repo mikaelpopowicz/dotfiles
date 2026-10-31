@@ -19,3 +19,6 @@ config/claude/skills/spatie-product-stats
 config/claude/skills/synced/
 config/claude/skills/.trash/
 __pycache__/
+
+# Per-repo Claude local settings
+**/.claude/settings.local.json

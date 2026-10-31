@@ -113,3 +113,426 @@ function git-prune-local() {
 function clone() {
   gh repo clone "$1" "${@:2}"
 }
+
+# Mikael fork keep: nah + docker/gum + rmart
+nah () {
+    git reset --hard
+    git clean -df
+    if [ -d ".git/rebase-apply" ] || [ -d ".git/rebase-merge" ]; then
+        git rebase --abort
+    fi
+}
+
+function dce() {
+   local service="$1"
+   if [ -z "$service" ]; then
+      service=$(docker compose config --services | gum filter --placeholder "Select service...")
+   fi
+   [ -z "$service" ] && return 1
+   if [ $# -le 1 ]; then
+      docker compose exec "$service" bash
+   else
+      docker compose exec "$service" "${@:2}"
+   fi
+}
+
+function dcl() {
+   local service="$1"
+   if [ -z "$service" ]; then
+      service=$(docker compose config --services | gum filter --placeholder "Select service...")
+   fi
+   [ -z "$service" ] && return 1
+   docker compose logs --follow "$service" "${@:2}"
+}
+
+function dcu() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services (empty = all)..." | tr '\n' ' ')
+      docker compose up -d ${=services}
+   else
+      docker compose up -d "$@"
+   fi
+}
+
+function dcd() {
+   docker compose down
+}
+
+function dcs() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services to stop..." | tr '\n' ' ')
+      [ -z "$services" ] && return 1
+      docker compose stop ${=services}
+   else
+      docker compose stop "$@"
+   fi
+}
+
+function dcb() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services to stop..." | tr '\n' ' ')
+      [ -z "$services" ] && return 1
+      docker compose build ${=services}
+   else
+      docker compose build "$@"
+   fi
+}
+
+function dcr() {
+   if [ $# -eq 0 ]; then
+      local services
+      services=$(docker compose config --services | gum filter --no-limit --placeholder "Select services to restart..." | tr '\n' ' ')
+      [ -z "$services" ] && return 1
+      docker compose restart ${=services}
+   else
+      docker compose restart "$@"
+   fi
+}
+
+function dco() {
+   if ! docker compose config --services >/dev/null 2>&1; then
+      echo "No docker-compose file found in $(pwd)."
+      return 1
+   fi
+
+   local service="$1"
+   if [ -z "$service" ]; then
+      service=$(docker compose config --services | gum filter --placeholder "Select service...")
+   fi
+   [ -z "$service" ] && return 1
+
+   local project_name
+   project_name=$(docker compose config 2>/dev/null | awk -F': ' '/^name:/{print $2; exit}' | tr -d '"')
+   if [ -z "$project_name" ]; then
+      project_name=$(basename "$PWD" | tr '[:upper:]' '[:lower:]')
+   fi
+
+   local url="https://${service}.${project_name}.orb.local"
+   echo "Opening ${url}"
+   open "$url"
+}
+
+# --- rmart: cascade remove build/deps dirs (node / composer / cargo) ---
+_rmart_human_kib() {
+   local kib=${1:-0}
+   if (( kib < 1024 )); then
+      echo "${kib}K"
+   elif (( kib < 1048576 )); then
+      awk -v k="$kib" 'BEGIN { printf "%.1fM", k / 1024 }'
+   else
+      awk -v k="$kib" 'BEGIN { printf "%.2fG", k / 1024 / 1024 }'
+   fi
+}
+
+_rmart_usage() {
+   local cmd="$1" label="$2"
+   gum style --border rounded --padding "0 1" --border-foreground 212 --foreground 212 \
+      "$cmd — cascade remove $label"
+   gum style --margin "1 0 0 1" --foreground 245 \
+      "Usage: $cmd [-n|--dry-run] [-h|--help] [root]" \
+      "" \
+      "  root          Directory to scan (default: .)" \
+      "  -n, --dry-run Preview only — nothing deleted" \
+      "  -h, --help    Show this help" \
+      "" \
+      "Interactive: choose Delete or Dry-run, then All or Select." \
+      "Always prints a final report with sizes and space freed."
+}
+
+_rmart_header() {
+   local cmd="$1" root="$2" dry="$3" label="$4"
+   local -a lines=("$cmd" "looking for: $label" "root: $root")
+   if [[ "$dry" == "1" ]]; then
+      lines+=("mode: DRY-RUN")
+   fi
+   gum style --border rounded --padding "0 1" --border-foreground 212 --foreground 212 "${lines[@]}"
+   if [[ "$dry" == "1" ]]; then
+      gum style --foreground 228 --bold "  nothing will be deleted"
+   fi
+   echo
+}
+
+_rmart_scan() {
+   # stdout: sorted lines "KIB<TAB>PATH" (pruned find, numeric sizes)
+   # $1=root $2=dirname (node_modules|vendor|target)
+   local root="$1" dirname="$2"
+   local nm_path kib
+   local -a found lines
+   found=("${(@0)$(find "$root" -name "$dirname" -type d -prune -print0 2>/dev/null)}")
+   for nm_path in "${found[@]}"; do
+      [[ -n "$nm_path" ]] || continue
+      kib=$(du -sk "$nm_path" 2>/dev/null | awk '{print $1}')
+      [[ -n "$kib" ]] || continue
+      lines+=("${kib}"$'\t'"${nm_path}")
+   done
+   (( ${#lines[@]} )) || return 0
+   printf '%s\n' "${lines[@]}" | sort -nr -k1,1
+}
+
+_rmart_format_row() {
+   printf '%-7s · %s' "$(_rmart_human_kib "$1")" "$2"
+}
+
+_rmart_sum_kib() {
+   local total=0 kib
+   for kib in "$@"; do
+      total=$(( total + kib ))
+   done
+   echo "$total"
+}
+
+_rmart_report() {
+   local dry="$1"
+   shift
+   local -a kibs=() paths=() statuses=()
+   local i=1
+   if [[ "$dry" == "1" ]]; then
+      while (( i <= $# )); do
+         kibs+=("${@[$i]}")
+         paths+=("${@[$((i + 1))]}")
+         i=$(( i + 2 ))
+      done
+   else
+      while (( i <= $# )); do
+         kibs+=("${@[$i]}")
+         paths+=("${@[$((i + 1))]}")
+         statuses+=("${@[$((i + 2))]}")
+         i=$(( i + 3 ))
+      done
+   fi
+
+   local n=${#paths[@]}
+   local total=$(_rmart_sum_kib "${kibs[@]}")
+   local human=$(_rmart_human_kib "$total")
+   local title verb
+   if [[ "$dry" == "1" ]]; then
+      title="Dry-run report"
+      verb="would free"
+   else
+      title="Cleanup report"
+      verb="freed"
+   fi
+
+   echo
+   gum style --border rounded --padding "0 1" --border-foreground 114 --foreground 114 "$title"
+   local idx row
+   for (( idx = 1; idx <= n; idx++ )); do
+      row="$(_rmart_format_row "${kibs[$idx]}" "${paths[$idx]}")"
+      if [[ "$dry" == "1" ]]; then
+         gum style --margin "0 0 0 1" --foreground 252 "$row"
+      elif [[ "${statuses[$idx]}" == "ok" ]]; then
+         gum style --margin "0 0 0 1" --foreground 114 "✓ $row"
+      else
+         gum style --margin "0 0 0 1" --foreground 196 "✗ $row"
+      fi
+   done
+   echo
+   gum style --bold --foreground 212 "  $n path(s) · $verb $human"
+   if [[ "$dry" != "1" ]]; then
+      local ok=0 fail=0
+      for (( idx = 1; idx <= n; idx++ )); do
+         if [[ "${statuses[$idx]}" == "ok" ]]; then
+            ok=$(( ok + 1 ))
+         else
+            fail=$(( fail + 1 ))
+         fi
+      done
+      gum style --foreground 245 "  ok: $ok · failed: $fail"
+   fi
+}
+
+# _rmart <cmd> <dirname> <label> [args…]
+_rmart() {
+   local cmd="$1" dirname="$2" label="$3"
+   shift 3
+
+   if ! command -v gum >/dev/null 2>&1; then
+      echo "$cmd: gum is required (https://github.com/charmbracelet/gum)" >&2
+      return 1
+   fi
+
+   local dry=0 root="."
+   local -a pos=()
+   local arg
+   for arg in "$@"; do
+      case "$arg" in
+         -h|--help)
+            _rmart_usage "$cmd" "$label"
+            return 0
+            ;;
+         -n|--dry-run)
+            dry=1
+            ;;
+         -*)
+            echo "$cmd: unknown option: $arg (try -h)" >&2
+            return 1
+            ;;
+         *)
+            pos+=("$arg")
+            ;;
+      esac
+   done
+   if (( ${#pos[@]} > 1 )); then
+      echo "$cmd: too many arguments (try -h)" >&2
+      return 1
+   fi
+   (( ${#pos[@]} == 1 )) && root="${pos[1]}"
+
+   if [[ ! -d "$root" ]]; then
+      echo "$cmd: not a directory: $root" >&2
+      return 1
+   fi
+   root="${root:A}"
+
+   local flag_dry=$dry
+   _rmart_header "$cmd" "$root" "$dry" "$label"
+
+   local scan_file funcs
+   scan_file=$(mktemp) || return 1
+   funcs="${HOME}/.dotfiles/home/.functions"
+   if ! gum spin --spinner dot --title "Scanning for $label…" -- \
+      zsh -c 'source "$1"; _rmart_scan "$2" "$3" >"$4"' zsh "$funcs" "$root" "$dirname" "$scan_file"
+   then
+      rm -f "$scan_file"
+      echo "$cmd: scan failed" >&2
+      return 1
+   fi
+
+   local -a kibs=() paths=()
+   local kib nm_path
+   while IFS=$'\t' read -r kib nm_path; do
+      [[ -n "$nm_path" ]] || continue
+      kibs+=("$kib")
+      paths+=("$nm_path")
+   done <"$scan_file"
+   rm -f "$scan_file"
+
+   local count=${#paths[@]}
+   if (( count == 0 )); then
+      gum style --foreground 245 "No $label found under $root"
+      return 0
+   fi
+
+   local total=$(_rmart_sum_kib "${kibs[@]}")
+   gum style --margin "0 0 1 0" --bold --foreground 252 \
+      "  $count found · $(_rmart_human_kib "$total") total"
+   local idx
+   for (( idx = 1; idx <= count; idx++ )); do
+      gum style --margin "0 0 0 1" --foreground 245 \
+         "$(_rmart_format_row "${kibs[$idx]}" "${paths[$idx]}")"
+   done
+   echo
+
+   if (( flag_dry == 0 )); then
+      local mode
+      mode=$(gum choose --header "Mode:" "Delete" "Dry-run" "Cancel") || return 0
+      case "$mode" in
+         Delete) dry=0 ;;
+         Dry-run) dry=1 ;;
+         Cancel|"") return 0 ;;
+      esac
+      echo
+      _rmart_header "$cmd" "$root" "$dry" "$label"
+   fi
+
+   local scope
+   scope=$(gum choose --header "Scope:" "All" "Select…") || return 0
+   local -a sel_kibs=() sel_paths=()
+   case "$scope" in
+      All)
+         sel_kibs=("${kibs[@]}")
+         sel_paths=("${paths[@]}")
+         ;;
+      "Select…")
+         local -a rows=()
+         for (( idx = 1; idx <= count; idx++ )); do
+            rows+=("$(_rmart_format_row "${kibs[$idx]}" "${paths[$idx]}")")
+         done
+         local selected row_line
+         selected=$(printf '%s\n' "${rows[@]}" | gum filter --no-limit \
+            --header "Select $label to target:" \
+            --placeholder "Type to filter…") || return 0
+         [[ -n "$selected" ]] || { gum style --foreground 245 "Nothing selected."; return 0; }
+         while IFS= read -r row_line; do
+            [[ -n "$row_line" ]] || continue
+            nm_path="${row_line#* · }"
+            for (( idx = 1; idx <= count; idx++ )); do
+               if [[ "${paths[$idx]}" == "$nm_path" ]]; then
+                  sel_kibs+=("${kibs[$idx]}")
+                  sel_paths+=("${paths[$idx]}")
+                  break
+               fi
+            done
+         done <<<"$selected"
+         (( ${#sel_paths[@]} )) || { gum style --foreground 245 "Nothing selected."; return 0; }
+         ;;
+      *)
+         return 0
+         ;;
+   esac
+
+   local sel_n=${#sel_paths[@]}
+   local sel_total=$(_rmart_sum_kib "${sel_kibs[@]}")
+   local sel_human=$(_rmart_human_kib "$sel_total")
+
+   if (( dry == 0 )); then
+      gum confirm "Delete $sel_n $label ($sel_human)?" \
+         --affirmative "Delete" --negative "Abort" || return 0
+
+      local -a statuses=()
+      local fail=0 status_file
+      status_file=$(mktemp) || return 1
+      if ! gum spin --spinner dot --title "Removing $sel_n directories…" -- \
+         zsh -c '
+            status_file=$1; shift
+            for nm_path; do
+               if rm -rf -- "$nm_path" 2>/dev/null; then
+                  print ok
+               else
+                  print fail
+               fi
+            done >"$status_file"
+         ' zsh "$status_file" "${sel_paths[@]}"
+      then
+         rm -f "$status_file"
+         echo "$cmd: delete failed" >&2
+         return 1
+      fi
+
+      local st
+      while IFS= read -r st; do
+         statuses+=("$st")
+         [[ "$st" == "ok" ]] || fail=$(( fail + 1 ))
+      done <"$status_file"
+      rm -f "$status_file"
+
+      local -a report_args=()
+      for (( idx = 1; idx <= sel_n; idx++ )); do
+         report_args+=("${sel_kibs[$idx]}" "${sel_paths[$idx]}" "${statuses[$idx]}")
+      done
+      _rmart_report 0 "${report_args[@]}"
+      (( fail == 0 )) && return 0 || return 1
+   else
+      local -a report_args=()
+      for (( idx = 1; idx <= sel_n; idx++ )); do
+         report_args+=("${sel_kibs[$idx]}" "${sel_paths[$idx]}")
+      done
+      _rmart_report 1 "${report_args[@]}"
+      return 0
+   fi
+}
+
+rmnm() {
+   _rmart rmnm node_modules node_modules "$@"
+}
+
+rmcomposer() {
+   _rmart rmcomposer vendor vendor "$@"
+}
+
+rmcargo() {
+   _rmart rmcargo target target "$@"
+}
