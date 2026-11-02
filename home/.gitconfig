@@ -1,12 +1,27 @@
 [core]
-	excludesfile = /Users/freek/.global-gitignore
-	autocrlf = false
+	excludesfile = ~/.global-gitignore
+	autocrlf = input
 	pager = delta
 
 [user]
-	name = Freek Van der Herten
-	email = freek@spatie.be
-	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOd4zgKsJm1yDquP2+Ca7nZqUiJ2aZNwxJHP9gg3teWQ
+	name = Mikaël Popowicz
+	email = mikael.popowicz@big-boss-studio.com
+	signingkey = ~/.ssh/id_ed25519.pub
+
+[commit]
+	gpgsign = true
+
+[gpg]
+	format = ssh
+
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+
+# Gmail identity only under ~/code/ (see home/.gitconfig-private)
+[includeIf "gitdir:~/code/"]
+	path = ~/.gitconfig-private
+[includeIf "gitdir:~/Code/"]
+	path = ~/.gitconfig-private
 
 [filter "lfs"]
 	required = true
@@ -22,15 +37,6 @@
 
 [init]
 	defaultBranch = main
-
-[gpg]
-	format = ssh
-
-[gpg "ssh"]
-	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-
-[commit]
-	gpgsign = true
 
 [push]
 	autoSetupRemote = true
@@ -49,9 +55,21 @@
 
 [diff]
 	colorMoved = default
+
+[alias]
+	st = status
+	co = commit
+	ch = checkout
+	br = branch
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)%an <%ae>%Creset' --abbrev-commit
+	po = push origin
+	fo = fetch origin
+	tree = ls-tree -r HEAD --name-only
+
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
+
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential

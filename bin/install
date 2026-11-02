@@ -46,6 +46,7 @@ success "Oh My Zsh installed"
 # Git configuration
 step "Configuring Git"
 ln -sf ~/.dotfiles/home/.gitconfig ~/.gitconfig
+ln -sf ~/.dotfiles/home/.gitconfig-private ~/.gitconfig-private
 ln -sf ~/.dotfiles/home/.global-gitignore ~/.global-gitignore
 success "Git configured"
 
