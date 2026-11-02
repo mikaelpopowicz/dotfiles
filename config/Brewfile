@@ -59,7 +59,19 @@ cask "visual-studio-code"
 cask "dbngin"
 cask "ngrok"
 cask "insomnia"
+
+# Quick Look
+# Note: several QL casks are deprecated by Homebrew but still install.
+# quicklook-json is disabled (HTTP-only artifact) — install manually if needed:
+#   curl -fsSL http://www.sagtau.com/media/QuickLookJSON.qlgenerator.zip -o /tmp/qljson.zip
+#   unzip -o /tmp/qljson.zip -d ~/Library/QuickLook && qlmanage -r
 cask "qlmarkdown"
+cask "qlcolorcode"
+cask "qlstephen"
+cask "qlprettypatch"
+cask "quicklook-csv"
+cask "betterzip"
+cask "suspicious-package"
 
 # Optional but already installed — keep for machine rebuilds
 cask "docker-desktop"
