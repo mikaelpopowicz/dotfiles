@@ -30,8 +30,8 @@ brew "awscli"
 brew "yt-dlp"
 brew "act"           # run GitHub Actions locally
 brew "btop"
-brew "stripe"
-brew "supabase"
+brew "stripe/stripe-cli/stripe"
+brew "supabase/tap/supabase"
 
 # Local web stack helpers
 brew "nginx"
