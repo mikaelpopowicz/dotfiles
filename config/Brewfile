@@ -1,55 +1,70 @@
 # Dotfiles Brewfile
-# Install with: brew bundle --file=~/.dotfiles/Brewfile
+# Install with: brew bundle --file=~/.dotfiles/config/Brewfile
 
-# Core tools
-brew "node"
+# Taps (CLI from external taps)
+tap "stripe/stripe-cli"
+tap "supabase/tap"
+
+# Core / language
 brew "php"
 brew "composer"
 brew "pkg-config"
+brew "nvm"           # Node via nvm (not brew node / fnm)
+brew "mysql-client"  # client only; DB via OrbStack/DBngin
+
+# Everyday CLI
 brew "wget"
 brew "httpie"
 brew "ncdu"
-brew "hub"
 brew "gh"
 brew "ack"
 brew "doctl"
-cask "1password-cli"
 brew "git-secret"
 brew "imagemagick"
-brew "mysql"
-brew "yarn"
 brew "ghostscript"
-brew "mackup"
+brew "jq"
+brew "yq"
+brew "gum"
+brew "ffmpeg"
+brew "awscli"
+brew "yt-dlp"
+brew "act"           # run GitHub Actions locally
+brew "btop"
+brew "stripe"
+brew "supabase"
+
+# Local web stack helpers
+brew "nginx"
+brew "dnsmasq"
 
 # Zsh
 brew "zsh-autosuggestions"
 
-# Modern CLI tools
-brew "starship"
+# Modern CLI (zoxide + friends)
 brew "zoxide"
+brew "fzf"
 brew "bat"
 brew "eza"
 brew "ripgrep"
 brew "fd"
 brew "git-delta"
-brew "fnm"
-brew "fzf"
 brew "direnv"
-brew "jq"
-brew "yq"
-brew "bottom"
-brew "gum"
 
-# Development tools
-cask "claude-code"
-cask "zed"
-
-# QuickLook plugins
-cask "qlcolorcode"
-cask "qlstephen"
+# Terminal & apps you already use
+cask "warp"
+cask "orbstack"
+cask "1password"
+cask "raycast"
+cask "visual-studio-code"
+cask "dbngin"
+cask "ngrok"
+cask "insomnia"
 cask "qlmarkdown"
-cask "quicklook-json"
-cask "qlprettypatch"
-cask "quicklook-csv"
-cask "betterzip"
-cask "suspicious-package"
+
+# Optional but already installed — keep for machine rebuilds
+cask "docker-desktop"
+cask "jetbrains-toolbox"
+cask "google-chrome"
+cask "slack"
+cask "ray"
+cask "android-platform-tools"
