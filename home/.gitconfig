@@ -14,9 +14,6 @@
 [gpg]
 	format = ssh
 
-[gpg "ssh"]
-	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-
 # Gmail identity only under ~/code/ (see home/.gitconfig-private)
 [includeIf "gitdir:~/code/"]
 	path = ~/.gitconfig-private
