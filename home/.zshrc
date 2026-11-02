@@ -137,7 +137,12 @@ if command -v zoxide &> /dev/null; then
     eval "$(zoxide init zsh)"
 fi
 
-# fnm - Node.js version manager
+# direnv - per-directory env files
+if command -v direnv &> /dev/null; then
+    eval "$(direnv hook zsh)"
+fi
+
+# fnm - Node.js version manager (optional; this machine uses nvm)
 if command -v fnm &> /dev/null; then
     eval "$(fnm env --use-on-cd)"
 fi
